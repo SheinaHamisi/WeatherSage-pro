@@ -12,6 +12,6 @@ fun DailyDto.toDaily(): Daily {
         title = weatherDto.getOrNull(0)?.main ?: "",
         description = weatherDto.getOrNull(0)?.description ?: "",
         windSpeed = windSpeed,
-        icon = weatherDto.getOrNull(0)?.icon ?: ""
+        icon = "https://openweathermap.org/img/wn/${weatherDto.getOrNull(0)?.icon}@2x.png"
     )
 }

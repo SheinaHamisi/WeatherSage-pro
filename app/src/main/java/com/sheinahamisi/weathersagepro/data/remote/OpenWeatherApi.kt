@@ -10,7 +10,7 @@ interface OpenWeatherApi {
     suspend fun getCurrentWeather(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
-        @Query("appid") appid: String
+        @Query("exclude") exclude: String = "minutely,hourly",
     ): OpenWeatherResponseDto
 
 

@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.*
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -23,6 +26,19 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            val secretsPropertiesFile = rootProject.file("secrets.properties")
+            val fileInputStream = FileInputStream(secretsPropertiesFile)
+            if (secretsPropertiesFile.exists()) {
+                val secretsProperties = Properties()
+                secretsProperties.load(fileInputStream)
+                buildConfigField("String", "OPEN_WEATHER_MAP_API_KEY",
+                    secretsProperties.getProperty("open_weather_map_api_key")
+                )
+            } else {
+                throw GradleException("secrets.properties file not found. Please create it and add your API key.")
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -66,6 +82,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.45")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("androidx.navigation:navigation-compose:2.7.2")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.jakewharton.timber:timber:5.0.1")
     kapt("com.google.dagger:hilt-android-compiler:2.45")
     implementation("androidx.compose.ui:ui")
