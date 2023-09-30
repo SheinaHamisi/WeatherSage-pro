@@ -1,7 +1,9 @@
 package com.sheinahamisi.weathersagepro.di
 
 import com.sheinahamisi.weathersagepro.domain.repository.WeatherRepository
+import com.sheinahamisi.weathersagepro.domain.use_case.GetCurrentLocation
 import com.sheinahamisi.weathersagepro.domain.use_case.GetCurrentWeather
+import com.sheinahamisi.weathersagepro.domain.use_case.GetNetworkStatus
 import com.sheinahamisi.weathersagepro.domain.use_case.UseCases
 import dagger.Module
 import dagger.Provides
@@ -20,10 +22,23 @@ object DomainModule {
 
     @Provides
     @ViewModelScoped
+    fun provideGetCurrentLocation(repository: WeatherRepository) = GetCurrentLocation(repository)
+
+    @Provides
+    @ViewModelScoped
+    fun getNetworkStatus(repository: WeatherRepository) = GetNetworkStatus(repository)
+
+    @Provides
+    @ViewModelScoped
     fun provideUseCases(
-        getCurrentWeather: GetCurrentWeather
+        getCurrentWeather: GetCurrentWeather,
+        getCurrentLocation: GetCurrentLocation,
+        getNetworkStatus: GetNetworkStatus
     ) = UseCases(
-        getCurrentWeather = getCurrentWeather
+        getCurrentWeather = getCurrentWeather,
+        getCurrentLocation = getCurrentLocation,
+        getNetworkStatus = getNetworkStatus
     )
+
 
 }

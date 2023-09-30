@@ -1,4 +1,4 @@
-package com.sheinahamisi.weathersagepro.data.remote
+package com.sheinahamisi.weathersagepro.data.data_source.remote
 
 import com.sheinahamisi.weathersagepro.data.dto.OpenWeatherResponseDto
 import retrofit2.http.GET

@@ -5,9 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sheinahamisi.weathersagepro.data.util.Resource
+import com.sheinahamisi.weathersagepro.R
+import com.sheinahamisi.weathersagepro.core.util.Resource
 import com.sheinahamisi.weathersagepro.domain.use_case.UseCases
-import com.sheinahamisi.weathersagepro.presentation.util.UiEvent
+import com.sheinahamisi.weathersagepro.domain.util.CurrentLocationResult
+import com.sheinahamisi.weathersagepro.core.presentation.util.UiEvent
+import com.sheinahamisi.weathersagepro.core.util.UiText
+import com.sheinahamisi.weathersagepro.domain.util.NetworkStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.launchIn
@@ -29,9 +33,8 @@ class WeatherViewModel @Inject constructor(
     val uiEvent = _uiEvent.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
-            _uiEvent.send(UiEvent.OnLaunch)
-        }
+        getCurrentLocation()
+        getCurrentNetworkStatus()
     }
 
     fun onEvent(event: WeatherEvent) {
@@ -41,46 +44,169 @@ class WeatherViewModel @Inject constructor(
                     _uiEvent.send(UiEvent.Share)
                 }
             }
+
             WeatherEvent.OnDismissErrorDialog -> {
                 state = state.copy(
-                    showErrorDialog = false
+                    showPermissionErrorDialog = false
                 )
             }
+
             WeatherEvent.OnDragBottomSheet -> {
 
+            }
+
+            WeatherEvent.ShowPermissionErrorDialog -> {
+                state = state.copy(
+                    showPermissionErrorDialog = true
+                )
+            }
+
+            WeatherEvent.OnDismissShowPermissionErrorDialog -> {
+                state = state.copy(
+                    showPermissionErrorDialog = false
+                )
+            }
+
+            WeatherEvent.OnClickRetry -> {
+                state = state.copy(
+                    showNetworkErrorDialog = false
+                )
+                getCurrentLocation()
+            }
+
+            WeatherEvent.OnDismissShowNetworkErrorDialog -> {
+                state = state.copy(
+                    showNetworkErrorDialog = false
+                )
+            }
+
+            WeatherEvent.OnDismissNetworkStatusDialog -> {
+                state = state.copy(
+                    networkStatus = NetworkStatus.Idle
+                )
             }
         }
     }
 
-    fun getCurrentWeather(
-        lat: Double,
-        lon: Double
-    ) {
+    fun getCurrentLocation() {
         viewModelScope.launch {
-            useCases.getCurrentWeather(lat, lon).onEach { resource ->
-                when (resource) {
-                    is Resource.Success -> {
+            useCases.getCurrentLocation().onEach { result ->
+                when (result) {
+                    is CurrentLocationResult.Success -> {
                         state = state.copy(
-                            loading = false,
-                            weather = resource.data
+                            lat = result.lat,
+                            lon = result.lon,
+                            showPermissionErrorDialog = false
                         )
-                        Timber.tag("WEATHER_TAG").d("Weather: ${resource.data}")
+                        Timber.tag("WEATHER_VIEW_MODEL").d(
+                            """
+                            location coordinates:
+                            lat: ${result.lat}
+                            lon: ${result.lon}
+                        """.trimIndent()
+                        )
+
+                        getCurrentWeather()
                     }
-                    is Resource.Error -> {
+
+                    CurrentLocationResult.Error -> {
+                        Timber.tag("WEATHER_VIEW_MODEL").d(
+                            """
+                            CurrentLocationResult.Error
+                        """.trimIndent()
+                        )
                         state = state.copy(
-                            loading = false,
-                            showErrorDialog = true,
-                            errorMessage = resource.message ?: "An unexpected error occurred"
+                            showPermissionErrorDialog = true
                         )
                     }
-                    is Resource.Loading -> {
-                        state = state.copy(
-                            loading = true
-                        )
+
+                    CurrentLocationResult.RequestPermission -> {
+                        _uiEvent.send(UiEvent.RequestForPermission)
+                    }
+
+                    CurrentLocationResult.Retry -> {
+                        getCurrentWeather()
                     }
                 }
             }.launchIn(this)
         }
     }
 
+    private fun getCurrentNetworkStatus() {
+        viewModelScope.launch {
+            useCases.getNetworkStatus().onEach { result ->
+                when (result) {
+                    NetworkStatus.Available -> {
+                        state = state.copy(
+                            showNetworkErrorDialog = false,
+                            networkStatus = NetworkStatus.Available
+                        )
+                        getCurrentLocation()
+                    }
+
+                    NetworkStatus.Losing -> {
+                        state = state.copy(
+                            networkStatusErrorMessage = UiText.StringResource(
+                                R.string.poor_network_connection
+                            ),
+                            networkStatus = NetworkStatus.Losing
+                        )
+                    }
+
+                    NetworkStatus.Lost -> {
+                        state = state.copy(
+                            networkStatusErrorMessage = UiText.StringResource(
+                                R.string.network_unavailable
+                            ),
+                            networkStatus = NetworkStatus.Lost
+                        )
+                    }
+
+                    NetworkStatus.Unavailable -> {
+                        state = state.copy(
+                            networkStatusErrorMessage = UiText.StringResource(
+                                R.string.network_unavailable
+                            ),
+                            networkStatus = NetworkStatus.Unavailable
+                        )
+                    }
+                    NetworkStatus.Idle -> Unit
+                }
+            }.launchIn(this)
+        }
+    }
+
+    private fun getCurrentWeather() {
+        viewModelScope.launch {
+            if (state.lat != null && state.lon != null) {
+                useCases.getCurrentWeather(state.lat!!, state.lon!!).onEach { resource ->
+                    when (resource) {
+                        is Resource.Success -> {
+                            state = state.copy(
+                                loading = false,
+                                weather = resource.data
+                            )
+                            Timber.tag("WEATHER_TAG").d("Weather: ${resource.data}")
+                        }
+
+                        is Resource.Error -> {
+                            state = state.copy(
+                                loading = false,
+                                showNetworkErrorDialog = true,
+                                networkErrorMessage = resource.message
+                            )
+                        }
+
+                        is Resource.Loading -> {
+                            state = state.copy(
+                                loading = true
+                            )
+                        }
+                    }
+                }.launchIn(this)
+            } else {
+                getCurrentLocation()
+            }
+        }
+    }
 }

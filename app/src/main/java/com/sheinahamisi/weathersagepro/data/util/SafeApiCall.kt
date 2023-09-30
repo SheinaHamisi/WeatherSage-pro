@@ -1,5 +1,7 @@
 package com.sheinahamisi.weathersagepro.data.util
 
+import com.sheinahamisi.weathersagepro.core.util.Resource
+import com.sheinahamisi.weathersagepro.core.util.UiText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import retrofit2.HttpException
@@ -14,9 +16,15 @@ inline fun <T> safeApiCall(
             val response = apiCall()
             emit(Resource.Success(response))
         } catch (e: HttpException) {
-            emit(Resource.Error(e.message ?: "An unexpected error occurred"))
+            emit(Resource.Error(UiText.DynamicString(e.message ?: "An unexpected error occurred")))
         } catch (e: IOException) {
-            emit(Resource.Error(e.message ?: "Couldn't reach server. Check your internet connection"))
+            emit(
+                Resource.Error(
+                    UiText.DynamicString(
+                        "Couldn't reach server. Check your internet connection!"
+                    )
+                )
+            )
         }
     }
 }
