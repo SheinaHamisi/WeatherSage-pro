@@ -17,9 +17,9 @@ fun OpenWeatherResponseDto.toOpenWeatherResponse(): OpenWeatherResponse {
             "",
             0.0
         ) } ?: listOf(),
-        timeZone = timezone,
-        lat = lat,
-        lon = lon,
+        timeZone = timezone ?: "",
+        lat = lat ?: 0.0,
+        lon = lon ?: 0.0,
         current = currentDto?.toCurrent() ?: Current(0.0, 0, 0.0, 0, "", "", "", 0.0)
     )
 }

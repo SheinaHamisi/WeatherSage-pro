@@ -11,8 +11,7 @@ interface OpenWeatherApi {
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("exclude") exclude: String = "minutely,hourly",
+        @Query("units") units: String = "metric",
     ): OpenWeatherResponseDto
-
-
 
 }

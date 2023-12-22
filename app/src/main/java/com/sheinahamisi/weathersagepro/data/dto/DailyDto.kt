@@ -20,8 +20,10 @@ data class DailyDto(
     val summary: String,
     val sunrise: Int,
     val sunset: Int,
+    @SerializedName("temp")
     val tempDto: TempDto,
     val uvi: Double,
+    @SerializedName("weather")
     val weatherDto: List<WeatherDto>,
     @SerializedName("wind_deg")
     val windDeg: Int,
