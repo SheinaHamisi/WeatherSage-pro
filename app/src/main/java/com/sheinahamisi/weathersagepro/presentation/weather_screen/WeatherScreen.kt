@@ -108,7 +108,8 @@ fun WeatherScreenContent(
                     location = state.weather?.timeZone ?: "",
                     image = state.weather?.current?.icon ?: "",
                     temperature = state.weather?.current?.temp ?: 0.0,
-                    weather = state.weather?.current?.description ?: ""
+                    weather = state.weather?.current?.description ?: "",
+                    loading = state.loading
                 )
                 LowerSection(
                     modifier = Modifier.weight(1f),
