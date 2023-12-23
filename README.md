@@ -28,3 +28,8 @@ Make sure to obtain an API key; you can check for one under "Api Keys."
 
 # Environment
 Ensure you have JDK 17 installed.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
+
